@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository explores a coffee shop's sales with **MySQL** queries.
+This repository explores a coffee shop's sales with **MySQL** queries and progresses into Power BI visualizations.
 
 ## Objectives
 
