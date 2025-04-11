@@ -57,7 +57,7 @@ GROUP BY Month;
 
 # Rounded to thousands
 SELECT MONTH(transaction_date) AS Month,
-	CONCAT((ROUND(SUM(unit_price * transaction_qty)))/1000 , "K") AS Total_Sales
+	CONCAT((ROUND(SUM(unit_price * transaction_qty)))/1000, "K") AS Total_Sales
 FROM sales
 GROUP BY MONTH(transaction_date);
 
@@ -109,21 +109,159 @@ ORDER BY Month;
 
 
 #######################
-# 3. Heat map analysis:
+# 3. Charts, Heat map analysis:
+-- 3.1 Extract key metrics by month
+-- 3.2 Analyze performance by day type and store location
 
+-- 3.1
+# Extract total orders, items sold, and sales per month
 SELECT
 	MONTH(transaction_date) AS month,
     COUNT(transaction_id) AS Total_Orders,
 	SUM(transaction_qty) AS Total_Items_Sold,
 	ROUND(SUM(unit_price * transaction_qty)) AS Total_Sales
 FROM sales
+# WHERE transaction_date = '2023-05-18'
 GROUP BY month;
 
+# Round the totals to thousands
+SELECT
+	MONTH(transaction_date) AS month,
+    CONCAT(ROUND(COUNT(transaction_id)/1000,1), "K") AS Total_Orders,
+	CONCAT(ROUND(SUM(transaction_qty)/1000,1), "K") AS Total_Items_Sold,
+	CONCAT(ROUND(SUM(unit_price * transaction_qty),1), "K") AS Total_Sales
+FROM sales
+# WHERE transaction_date = '2023-05-18'
+GROUP BY month;
+
+-- 3.2
+# Weekdays vs. weekends
+-- weekdays (mon through fri) is index 2 to 6
+-- weekends (sat, sun) is index 7, 1
+SELECT
+    CASE WHEN DAYOFWEEK(transaction_date) IN (2,6) THEN 'Weekdays'
+    ELSE 'Weekends'
+    END AS Day_Type,
+    CONCAT(ROUND(SUM(unit_price * transaction_qty)/1000,1),"K") AS Total_Sales
+    -- to get sales percent for weekdays vs weekends:
+    #CONCAT(ROUND(SUM(unit_price * transaction_qty) * 100.0 /
+	#SUM(SUM(unit_price * transaction_qty)) OVER (), 1), '%') AS Sales_Percent 
+FROM sales
+# WHERE MONTH(transaction_date) = 5 # To get specific month
+GROUP BY Day_Type;
+
+# By store location
+SELECT store_location,
+	SUM(unit_price * transaction_qty) AS Total_Sales
+FROM sales
+WHERE MONTH(transaction_date) = 5
+GROUP BY store_location
+ORDER BY Total_Sales DESC;
+
+# Bonus: By store location, by day type
+SELECT store_location,
+	CASE 
+		WHEN DAYOFWEEK(transaction_date) IN (2,3,4,5,6) THEN 'Weekdays'
+		ELSE 'Weekends'
+	END AS Day_Type,
+	ROUND(SUM(unit_price * transaction_qty)) AS Total_Sales
+FROM sales
+GROUP BY store_location, Day_Type
+ORDER BY store_location, Day_Type;
 
 
+#######################
+# 4. Daily Sales, Averages, Products, Sales heat map:
+-- 4.1 Daily Sales and Averages
+-- 4.2 Product Categories Sales
+-- 4.3 Top Selling Products
+-- 4.4 Sales by Days and Hours
 
+SELECT * FROM sales;
 
+-- 4.1
+# Takes average of daily total sales
+SELECT AVG(total_sales) AS Avg_Sales
+FROM (
+	SELECT SUM(transaction_qty * unit_price) AS total_sales
+    FROM sales
+    WHERE MONTH(transaction_date) = 5
+    GROUP BY transaction_date
+    ) AS inner_query;
 
+# Daily total sales
+SELECT DAY(transaction_date) AS Day,
+	SUM(unit_price * transaction_qty) AS Total_Sales
+FROM sales
+WHERE MONTH(transaction_date) = 5
+GROUP BY Day;
 
+# Above or Below average
+SELECT Day,
+	CASE
+		WHEN Total_Sales > Avg_Sales THEN 'Above Average'
+        WHEN Total_Sales < Avg_Sales THEN 'Below Average'
+        ELSE 'Average'
+	END AS Placement,
+    Total_Sales
+FROM (
+	SELECT DAY(transaction_date) AS Day,
+		SUM(unit_price * transaction_qty) AS Total_Sales,
+        AVG(SUM(unit_price * transaction_qty)) OVER () AS Avg_Sales
+	FROM sales
+    WHERE MONTH(transaction_date) = 5
+    GROUP BY Day
+    ) AS Sales_Values
+ORDER BY Day;
 
+-- 4.2
+SELECT product_category,
+	SUM(unit_price * transaction_qty) AS Total_Sales
+FROM sales
+WHERE MONTH(transaction_date) = 5
+GROUP BY product_category
+ORDER BY Total_Sales DESC;
+
+-- 4.3
+SELECT product_type,
+	SUM(unit_price * transaction_qty) AS Total_Sales
+FROM sales
+WHERE MONTH(transaction_date) = 5 # AND product_category = 'Coffee'
+GROUP BY product_type
+ORDER BY Total_Sales DESC
+LIMIT 10;
+
+-- 4.4
+SELECT SUM(unit_price * transaction_qty) AS Total_Sales,
+	SUM(transaction_qty) AS Total_Items_Sold,
+    COUNT(*) AS Total_Orders
+FROM sales
+WHERE MONTH(transaction_date) = 5
+AND DAYOFWEEK(transaction_date) = 2
+AND HOUR(transaction_time) = 8;
+
+# Sales by hour
+SELECT HOUR(transaction_time),
+	SUM(unit_price * transaction_qty) AS Total_Sales
+FROM sales
+WHERE MONTH(transaction_date) = 5
+GROUP BY HOUR(transaction_time)
+ORDER BY HOUR(transaction_time);
+
+# Sales by day
+SELECT
+	CASE
+		WHEN DAYOFWEEK(transaction_date) = 2 THEN 'Monday'
+        WHEN DAYOFWEEK(transaction_date) = 3 THEN 'Tuesday'
+        WHEN DAYOFWEEK(transaction_date) = 4 THEN 'Wednesday'
+        WHEN DAYOFWEEK(transaction_date) = 5 THEN 'Thursday'
+        WHEN DAYOFWEEK(transaction_date) = 6 THEN 'Friday'
+        WHEN DAYOFWEEK(transaction_date) = 7 THEN 'Saturday'
+        WHEN DAYOFWEEK(transaction_date) = 1 THEN 'Sunday'
+	END AS Day_Name,
+    ROUND(SUM(unit_price * transaction_qty)) AS Total_Sales
+FROM sales
+# WHERE MONTH(transaction_date) = 5
+GROUP BY Day_Name;
+        
 
