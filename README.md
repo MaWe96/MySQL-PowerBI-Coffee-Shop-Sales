@@ -63,7 +63,7 @@ This gave me flexibility in the dashboard design and the ability to use **DAX** 
 
 ---
 
-### 📈 Deeper Insights
+### Deeper Insights
 - **Weekend vs Weekday Sales**: donut chart split.
 - **Sales by Store Location**:
   - Orders (k).
