@@ -97,12 +97,12 @@ This gave me flexibility in the dashboard design and the ability to use **DAX** 
 ---
 
 ## Repository Contents
-├── Coffee_Shop_Sales.xlsx # Original Kaggle dataset
-├── Coffee_Shop_Queries.sql # MySQL queries for cleaning & exploration
-├── Coffee_Shop_Dashboard.pbix # Power BI dashboard file
-├── Dashboard_preview.png # Dashboard preview
-├── Coffee_Shop_DAX.txt # Power BI DAX code
-└── README.md # Project documentation
+- Coffee_Shop_Sales.xlsx # Original Kaggle dataset
+- Coffee_Shop_Queries.sql # MySQL queries for cleaning & exploration
+- Coffee_Shop_Dashboard.pbix # Power BI dashboard file
+- Dashboard_Preview.png # Dashboard preview
+- Coffee_Shop_DAX.txt # Power BI DAX code
+- README.md # Project documentation
 
 ---
 
